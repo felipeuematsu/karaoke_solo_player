@@ -16,7 +16,8 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   KaraokeMainPlayerControllerImpl() {
     playerTypeStream.stream.listen((type) => currentPlayerType = type);
     timer;
-    Future.delayed(const Duration(seconds: 1)).then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/mp4/test.mp4')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
+    Future.delayed(const Duration(seconds: 1))
+        .then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/mp4/test.mp4')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
     // Future.delayed(const Duration(seconds: 1)).then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/cdg/test.zip')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
   }
 
@@ -36,15 +37,14 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     }
   });
 
-  bool isLoaded = false;
-
-  var currentPlayerType = PlayerType.none;
-  int? playerWindowId;
-
   @override
   final Player vlcPlayer = Player(id: 14325);
   final CDGPlayer _cdgPlayer = CDGPlayer();
   final AudioPlayer _audioPlayer = AudioPlayer();
+
+  var currentPlayerType = PlayerType.none;
+  bool isLoaded = false;
+  int? playerWindowId;
 
   Future<void> _loadZip(String zipPath) async {
     final file = File(zipPath);
@@ -148,10 +148,16 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
 
   @override
   void skip() {
-    // TODO: implement skip when queue ready
-    if (!isLoaded) return;
-    _audioPlayer.seek(const Duration(milliseconds: 0));
-    _audioPlayer.play();
+    if (queue.isNotEmpty) {
+      final item = queue.removeFirst();
+      loadSong(item.song).then((value) => play());
+    } else {
+      stop();
+    }
+    // // TODO: implement skip when queue ready
+    // if (!isLoaded) return;
+    // _audioPlayer.seek(const Duration(milliseconds: 0));
+    // _audioPlayer.play();
   }
 
   @override
@@ -160,11 +166,25 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     final extension = path.split('.').last;
     switch (extension) {
       case 'zip':
+        vlcPlayer.stop();
         playerTypeStream.sink.add(PlayerType.cdg);
         return await _loadZip(path).then((_) => isLoaded = true);
       default:
+        _audioPlayer.stop();
         playerTypeStream.sink.add(PlayerType.vlc);
         return await _loadVideo(path).then((_) => isLoaded = true);
+    }
+  }
+
+  @override
+  bool get isPlaying {
+    switch (currentPlayerType) {
+      case PlayerType.vlc:
+        return vlcPlayer.playback.isPlaying;
+      case PlayerType.cdg:
+        return _audioPlayer.playerState.playing;
+      case PlayerType.none:
+        return false;
     }
   }
 }

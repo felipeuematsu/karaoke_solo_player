@@ -1,6 +1,5 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-// import 'package:flutter/material.dart';
 
 class WindowScaffold extends StatelessWidget {
   const WindowScaffold({Key? key, this.body, this.background}) : super(key: key);
@@ -14,22 +13,7 @@ class WindowScaffold extends StatelessWidget {
       children: [
         Positioned.fill(child: background ?? Container()),
         Positioned.fill(child: body ?? Container()),
-        Positioned.fill(
-          child: WindowTitleBarBox(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(child: _CustomMoveWindow()),
-                Row(children: [
-                  MinimizeWindowButton(),
-                  MaximizeWindowButton(),
-                  CloseWindowButton(),
-                ])
-              ],
-            ),
-          ),
-        ),
+        Positioned.fill(child: WindowTitleBarBox(child: const _CustomMoveWindow())),
       ],
     );
   }

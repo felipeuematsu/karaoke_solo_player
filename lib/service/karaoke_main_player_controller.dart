@@ -12,8 +12,10 @@ abstract class KaraokeMainPlayerController {
   final renderStream = StreamController<CdgRender>.broadcast();
   final playerTypeStream = StreamController<PlayerType>.broadcast();
   Player? get vlcPlayer;
+  bool get isPlaying;
 
   Queue<SongQueueItem> queue = Queue<SongQueueItem>();
+
 
   Future<void> loadSong(SongModel song);
 
