@@ -10,9 +10,7 @@ class QueueControllerImpl implements QueueController {
     _timer;
   }
 
-  late final _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-    queueService.getQueue().then((queue) => _queueStream.sink.add(queue));
-  });
+  late final _timer = Timer.periodic(const Duration(seconds: 1), (_) => queueService.getQueue().then((queue) => _queueStream.sink.add(queue)));
 
   final _queueStream = StreamController<Queue<SongQueueItem>>.broadcast();
 

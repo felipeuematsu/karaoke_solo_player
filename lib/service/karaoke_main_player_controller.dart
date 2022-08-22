@@ -7,8 +7,6 @@ import 'package:flutter_karaoke_player/model/song_model.dart';
 import 'package:flutter_karaoke_player/model/song_queue_item.dart';
 
 abstract class KaraokeMainPlayerController {
-  abstract final Timer timer;
-
   final renderStream = StreamController<CdgRender>.broadcast();
   final playerTypeStream = StreamController<PlayerType>.broadcast();
   Player? get vlcPlayer;

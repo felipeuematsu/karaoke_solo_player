@@ -15,30 +15,29 @@ import 'package:just_audio/just_audio.dart';
 class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   KaraokeMainPlayerControllerImpl() {
     playerTypeStream.stream.listen((type) => currentPlayerType = type);
-    timer;
+    vlcPlayer.positionStream.listen((event) {
+      if (isLoaded && currentPlayerType == PlayerType.cdg) {
+        try {
+          final time = event.position?.inMilliseconds;
+          final render = _cdgPlayer.render(time ?? 0);
+          if (render.isChanged) {
+            renderStream.sink.add(render);
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+      }
+    });
     Future.delayed(const Duration(seconds: 1))
         .then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/mp4/test.mp4')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
+    queue.add(SongQueueItem(SongModel(0, 0, 'title', 'artist', 'assets/cdg/test.zip'), SingerModel(0, 'singer')));
     // Future.delayed(const Duration(seconds: 1)).then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/cdg/test.zip')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
   }
 
   @override
-  late final timer = Timer.periodic(const Duration(milliseconds: 33), (_) {
-    if (isLoaded && currentPlayerType == PlayerType.cdg) {
-      try {
-        final render = _cdgPlayer.render(_audioPlayer.position.inMilliseconds);
-        if (render.isChanged) {
-          renderStream.sink.add(render);
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print(e);
-        }
-      }
-    }
-  });
-
-  @override
-  final Player vlcPlayer = Player(id: 14325);
+  final Player vlcPlayer = Player(id: 14325, commandlineArguments: ['--sout-ts-pcr 20']);
   final CDGPlayer _cdgPlayer = CDGPlayer();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -56,8 +55,10 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
         _cdgPlayer.load(content.buffer);
       }
       if (file.name.contains('.mp3')) {
-        final myCustomSource = MyCustomSource(content);
-        await _audioPlayer.setAudioSource(myCustomSource);
+        final tempFile = File('temp');
+        await tempFile.writeAsBytes(content);
+        vlcPlayer.open(Media.file(tempFile));
+        // await _audioPlayer.setAudioSource(myCustomSource);
       }
     }
   }
@@ -74,9 +75,13 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     switch (currentPlayerType) {
       case PlayerType.vlc:
         vlcPlayer.play();
+        // if (_audioPlayer.playing) {
+        //   _audioPlayer.stop();
+        //   print('audio player stopped');
+        // }
         return playerTypeStream.sink.add(PlayerType.vlc);
       case PlayerType.cdg:
-        _audioPlayer.play();
+        vlcPlayer.play();
         return playerTypeStream.sink.add(PlayerType.cdg);
       case PlayerType.none:
         break;
@@ -85,24 +90,17 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
 
   @override
   Future<void> close() async {
-    switch (currentPlayerType) {
-      case PlayerType.vlc:
-        return vlcPlayer.dispose();
-      case PlayerType.cdg:
-        await _audioPlayer.stop();
-        return renderStream.close();
-      case PlayerType.none:
-        break;
-    }
+    vlcPlayer.dispose();
+    await _audioPlayer.stop();
+    await renderStream.close();
   }
 
   @override
   Future<void> stop() async {
     switch (currentPlayerType) {
       case PlayerType.vlc:
-        return vlcPlayer.stop();
       case PlayerType.cdg:
-        return _audioPlayer.stop();
+        return vlcPlayer.stop();
       case PlayerType.none:
         return;
     }
@@ -113,9 +111,8 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     if (!isLoaded) return;
     switch (currentPlayerType) {
       case PlayerType.vlc:
-        return vlcPlayer.pause();
       case PlayerType.cdg:
-        return _audioPlayer.pause();
+        return vlcPlayer.pause();
       case PlayerType.none:
         return;
     }
@@ -135,10 +132,8 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     if (!isLoaded) return;
     switch (currentPlayerType) {
       case PlayerType.vlc:
-        vlcPlayer.seek(const Duration(milliseconds: 0));
-        break;
       case PlayerType.cdg:
-        _audioPlayer.seek(const Duration(milliseconds: 0));
+        vlcPlayer.seek(const Duration(milliseconds: 0));
         break;
       case PlayerType.none:
         break;
@@ -154,10 +149,6 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     } else {
       stop();
     }
-    // // TODO: implement skip when queue ready
-    // if (!isLoaded) return;
-    // _audioPlayer.seek(const Duration(milliseconds: 0));
-    // _audioPlayer.play();
   }
 
   @override
@@ -180,31 +171,10 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   bool get isPlaying {
     switch (currentPlayerType) {
       case PlayerType.vlc:
-        return vlcPlayer.playback.isPlaying;
       case PlayerType.cdg:
-        return _audioPlayer.playerState.playing;
+        return vlcPlayer.playback.isPlaying;
       case PlayerType.none:
         return false;
     }
-  }
-}
-
-// Feed your own stream of bytes into the player
-class MyCustomSource extends StreamAudioSource {
-  MyCustomSource(this.bytes);
-
-  final List<int> bytes;
-
-  @override
-  Future<StreamAudioResponse> request([int? start, int? end]) async {
-    start ??= 0;
-    end ??= bytes.length;
-    return StreamAudioResponse(
-      sourceLength: bytes.length,
-      contentLength: end - start,
-      offset: start,
-      stream: Stream.value(bytes.sublist(start, end)),
-      contentType: 'audio/mpeg',
-    );
   }
 }

@@ -1,11 +1,20 @@
 import 'dart:collection';
 
+import 'package:flutter_karaoke_player/config/constants.dart';
 import 'package:flutter_karaoke_player/model/song_queue_item.dart';
 import 'package:flutter_karaoke_player/service/client/karaoke_client.dart';
 import 'package:flutter_karaoke_player/service/queue_service.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class QueueServiceImpl extends QueueService {
-  QueueServiceImpl(this.client);
+  QueueServiceImpl(this.client) {
+    WebSocketChannel webSocketChannel = WebSocketChannel.connect(Uri(host: apiUrl, path: '/skip', port: apiPort));
+    webSocketChannel.stream.listen((data) {
+      if (data is String && data == 'skip') {
+        skip();
+      }
+    });
+  }
 
   final KaraokeClient client;
 
@@ -26,7 +35,7 @@ class QueueServiceImpl extends QueueService {
 
   @override
   Future<Queue<SongQueueItem>> remove(SongQueueItem item) async {
-    final response = await client.delete('/queue/${item.song.songId}');
+    final response = await client.delete('/queue', data: item.toMap());
     final queue = response.data as List<dynamic>;
     return Queue.from(queue.map((item) => SongQueueItem.fromMap(item)));
   }

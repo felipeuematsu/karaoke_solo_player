@@ -3,6 +3,8 @@ import 'dart:collection';
 import 'package:flutter_karaoke_player/model/song_queue_item.dart';
 
 abstract class QueueController {
+  const QueueController();
+
   Stream<Queue<SongQueueItem>> get queueStream;
 
   void add(SongQueueItem item);

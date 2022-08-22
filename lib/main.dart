@@ -1,7 +1,7 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:dart_vlc/dart_vlc.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_karaoke_player/features/karaoke_player_window/karaoke_player_window.dart';
+import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_player_window.dart';
 import 'package:flutter_karaoke_player/service/client/karaoke_client.dart';
 import 'package:flutter_karaoke_player/service/impl/karaoke_main_player_controller_impl.dart';
 import 'package:flutter_karaoke_player/service/impl/queue_controller_impl.dart';

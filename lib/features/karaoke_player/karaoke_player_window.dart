@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_context.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_cdg_builder.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_vlc_builder.dart';
-import 'package:flutter_karaoke_player/features/karaoke_player_window/components/window_scaffold.dart';
+import 'package:flutter_karaoke_player/features/karaoke_player/components/window_scaffold.dart';
 import 'package:flutter_karaoke_player/service/karaoke_main_player_controller.dart';
 
 class KaraokePlayerWindow extends StatefulWidget {
@@ -23,7 +23,7 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
   final focusNode = FocusNode();
 
   Function(KeyEvent) get onKey => (KeyEvent event) {
-    if (event is KeyDownEvent) {
+        if (event is KeyDownEvent) {
           final key = event.logicalKey;
           if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.space) {
             if (widget.videoPlayerService.isPlaying) {
