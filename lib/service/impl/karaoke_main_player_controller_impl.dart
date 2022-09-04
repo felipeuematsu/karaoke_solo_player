@@ -15,9 +15,11 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   KaraokeMainPlayerControllerImpl(this._queueService) {
-    vlcPlayer.playbackStream.listen((event) {
-      if (event.isCompleted) {
-        skip();
+    vlcPlayer.playbackStream.listen((event) async {
+      if (event.isCompleted && isSearching == false) {
+        isSearching = true;
+        await skip();
+        isSearching = false;
       }
     });
     playerTypeStream.stream.listen((type) => currentPlayerType = type);
@@ -53,7 +55,8 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
                 case 'restart':
                   return restart();
                 case 'skip':
-                  return skip();
+                  skip();
+                  return;
                 case 'volumeDown':
                   return volumeDown();
                 case 'volumeUp':
@@ -89,6 +92,7 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   PlayerType currentPlayerType = PlayerType.none;
   WebSocketChannel? webSocketChannel;
 
+  bool isSearching = false;
   bool get _isLoaded => _cdgPlayer.parser != null;
 
   Future<void> _loadZip(String zipPath) async {
@@ -183,8 +187,8 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   }
 
   @override
-  void skip() {
-    _queueService.getNextItem().then((value) async {
+  Future<void> skip() async {
+    await _queueService.getNextItem().then((value) async {
       if (value != null) {
         await loadSong(value.song);
         play();
