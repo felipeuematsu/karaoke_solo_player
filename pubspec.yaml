@@ -1,5 +1,5 @@
 name: flutter_karaoke_player
-description: Flutter Karaoke Player
+description: Karaoke Player
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -12,19 +12,15 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  just_audio: ^0.9.27
   logger: ^1.1.0
   dio: ^4.0.4
   dio_http2_adapter: ^2.0.0
   pretty_dio_logger: ^1.1.1
-  audio_session: ^0.1.9
-  just_audio_windows: ^0.1.0
   archive: ^3.3.0
   image: ^3.2.0
   bitmap: ^0.1.2
   fluent_ui: ^3.12.0
   provider: ^6.0.3
-  #  window_manager: ^0.2.5
   path_provider: ^2.0.11
   list_ext: ^1.0.4
   bitsdojo_window: ^0.1.2
@@ -36,8 +32,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  msix: ^3.6.3
 flutter:
   uses-material-design: true
-  assets:
-    - 'assets/cdg/'
-    - 'assets/mp4/'
+#  assets:
+#    - 'assets/cdg/'
+#    - 'assets/mp4/'
+
+msix_config:
+  display_name: Karaoke Player
+  publisher_display_name: Felipe Uematsu
+  identity_name: br.com.felipeuematsu.karaoke_player
+  msix_version: 1.0.0.0
+#  logo_path: C:\path\to\logo.png
+  capabilities: internetClient

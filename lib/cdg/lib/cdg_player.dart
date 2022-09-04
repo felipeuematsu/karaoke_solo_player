@@ -11,6 +11,7 @@ class CDGPlayer {
   CDGContext ctx = CDGContext();
   CDGParser? parser;
   bool? forceKey;
+  var currentMillis = 0;
 
   void load(ByteBuffer? buffer) {
     if (buffer == null) throw Exception('load() expects an ArrayBuffer');

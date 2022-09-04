@@ -3,7 +3,7 @@ class SingerModel {
 
   factory SingerModel.fromMap(map) {
     return SingerModel(
-      map['singerId'] as int,
+      map['id'] as int,
       map['name'] as String,
     );
   }
@@ -13,7 +13,7 @@ class SingerModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'singerId': singerId,
+      'id': singerId,
       'name': name,
     };
   }

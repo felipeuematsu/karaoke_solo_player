@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:dio/adapter.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/native_imp.dart';
-import 'package:dio_http2_adapter/dio_http2_adapter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_karaoke_player/service/client/interceptors/api_key_interceptor.dart';
@@ -27,7 +27,9 @@ abstract class AbstractClient extends DioForNative {
   BaseOptions getBaseOptions();
 
   void _certificatesConfigure() {
-    httpClientAdapter = Http2Adapter(ConnectionManager(onClientCreate: (uri, config) => config.context = SecurityContext(withTrustedRoots: false)));
+    httpClientAdapter = DefaultHttpClientAdapter()
+      ..onHttpClientCreate = (client) => client = HttpClient(context: SecurityContext(withTrustedRoots: false))
+      ..badCertificateCallback = (cert, host, port) => true;
   }
 
   Future<Uint8List> getFileFromByteData(String certificatePem) async {

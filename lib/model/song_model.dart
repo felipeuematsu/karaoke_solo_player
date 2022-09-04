@@ -1,8 +1,8 @@
 class SongModel {
-  SongModel(this.songId, this.duration, this.title, this.author, this.path, [this.lastPlayed]);
+  SongModel(this.songId, this.duration, this.title, this.artist, this.path, [this.lastPlayed]);
 
   final int songId, duration;
-  final String title, author, path;
+  final String title, artist, path;
   final DateTime? lastPlayed;
 
   Map<String, dynamic> toMap() {
@@ -10,7 +10,7 @@ class SongModel {
       'songId': songId,
       'duration': duration,
       'title': title,
-      'author': author,
+      'artist': artist,
       'path': path,
       'lastPlayed': lastPlayed,
     };
@@ -21,9 +21,9 @@ class SongModel {
       map['songId'] as int,
       map['duration'] as int,
       map['title'] as String,
-      map['author'] as String,
+      map['artist'] as String,
       map['path'] as String,
-      DateTime.parse(map['lastPlayed']),
+      DateTime.tryParse(map['lastPlayed'] as String? ?? ''),
     );
   }
 }

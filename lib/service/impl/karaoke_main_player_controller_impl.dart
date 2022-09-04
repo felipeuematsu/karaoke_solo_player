@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -6,20 +7,24 @@ import 'package:archive/archive_io.dart';
 import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_player.dart';
-import 'package:flutter_karaoke_player/model/singer_model.dart';
+import 'package:flutter_karaoke_player/config/constants.dart';
 import 'package:flutter_karaoke_player/model/song_model.dart';
-import 'package:flutter_karaoke_player/model/song_queue_item.dart';
 import 'package:flutter_karaoke_player/service/karaoke_main_player_controller.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:flutter_karaoke_player/service/queue_service.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
-  KaraokeMainPlayerControllerImpl() {
+  KaraokeMainPlayerControllerImpl(this._queueService) {
+    vlcPlayer.playbackStream.listen((event) {
+      if (event.isCompleted) {
+        skip();
+      }
+    });
     playerTypeStream.stream.listen((type) => currentPlayerType = type);
-    vlcPlayer.positionStream.listen((event) {
-      if (isLoaded && currentPlayerType == PlayerType.cdg) {
+    Timer.periodic(const Duration(milliseconds: 33), (timer) {
+      if (_isLoaded && currentPlayerType == PlayerType.cdg && isPlaying) {
         try {
-          final time = event.position?.inMilliseconds;
-          final render = _cdgPlayer.render(time ?? 0);
+          final render = _cdgPlayer.render(_cdgPlayer.currentMillis);
           if (render.isChanged) {
             renderStream.sink.add(render);
           }
@@ -27,28 +32,69 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
           if (kDebugMode) {
             print(e);
           }
+        } finally {
+          _cdgPlayer.currentMillis += 33;
         }
       }
     });
-    Future.delayed(const Duration(seconds: 1))
-        .then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/mp4/test.mp4')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
-    queue.add(SongQueueItem(SongModel(0, 0, 'title', 'artist', 'assets/cdg/test.zip'), SingerModel(0, 'singer')));
-    // Future.delayed(const Duration(seconds: 1)).then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/cdg/test.zip')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
+    Timer.periodic(const Duration(seconds: 2), (_) async {
+      if (webSocketChannel == null) {
+        try {
+          webSocketChannel = WebSocketChannel.connect(Uri.parse('ws://$apiUrl:$apiPort'));
+          webSocketChannel?.stream.listen((data) {
+            if (data is String) {
+              switch (data) {
+                case 'play':
+                  return play();
+                case 'pause':
+                  return pause();
+                case 'stop':
+                  return stop();
+                case 'restart':
+                  return restart();
+                case 'skip':
+                  return skip();
+                case 'volumeDown':
+                  return volumeDown();
+                case 'volumeUp':
+                  return volumeUp();
+                default:
+                  try {
+                    loadSong(SongModel.fromMap(json.decode(data)));
+                  } catch (_) {
+                    // ignore
+                  }
+              }
+            }
+          });
+          print('Connected to WebSocket');
+        } on Exception {
+          webSocketChannel?.sink.close();
+          webSocketChannel = null;
+        }
+      }
+    });
+    // Future.delayed(const Duration(seconds: 1)).then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/mp4/test.mp4')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
+    // queue.add(SongQueueItem(SongModel(0, 0, 'title', 'artist', 'assets/cdg/test.zip'), SingerModel(0, 'singer')));
+    // Future.delayed(const Duration(seconds: 1))
+    //     .then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/cdg/test.zip')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
   }
 
   @override
-  final Player vlcPlayer = Player(id: 14325, commandlineArguments: ['--sout-ts-pcr 20']);
-  final CDGPlayer _cdgPlayer = CDGPlayer();
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final Player vlcPlayer = Player(id: 14325);
+  final _cdgPlayer = CDGPlayer();
+  final _zipDecoder = ZipDecoder();
+  final QueueService _queueService;
 
-  var currentPlayerType = PlayerType.none;
-  bool isLoaded = false;
-  int? playerWindowId;
+  PlayerType currentPlayerType = PlayerType.none;
+  WebSocketChannel? webSocketChannel;
+
+  bool get _isLoaded => _cdgPlayer.parser != null;
 
   Future<void> _loadZip(String zipPath) async {
     final file = File(zipPath);
     final bytes = file.readAsBytesSync();
-    final archive = ZipDecoder().decodeBytes(bytes);
+    final archive = _zipDecoder.decodeBytes(bytes);
     for (final file in archive.files) {
       final content = file.content as Uint8List;
       if (file.name.contains('.cdg')) {
@@ -58,9 +104,17 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
         final tempFile = File('temp');
         await tempFile.writeAsBytes(content);
         vlcPlayer.open(Media.file(tempFile));
-        // await _audioPlayer.setAudioSource(myCustomSource);
       }
     }
+  }
+
+  Future<void> _loadMp3(String mp3Path) async {
+    final basePath = mp3Path.split('.').first;
+    final cdgPath = '$basePath.cdg';
+    final mp3 = File(mp3Path);
+    final cdg = File(cdgPath);
+    cdg.exists().then((value) => cdg.readAsBytes().then((value) => _cdgPlayer.load(value.buffer)));
+    mp3.exists().then((value) => vlcPlayer.open(Media.file(mp3)));
   }
 
   Future<void> _loadVideo(String path) async {
@@ -70,15 +124,11 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   }
 
   @override
-  Future<void> play() async {
-    if (!isLoaded) return;
+  void play() {
     switch (currentPlayerType) {
       case PlayerType.vlc:
+        if (!_isLoaded) return;
         vlcPlayer.play();
-        // if (_audioPlayer.playing) {
-        //   _audioPlayer.stop();
-        //   print('audio player stopped');
-        // }
         return playerTypeStream.sink.add(PlayerType.vlc);
       case PlayerType.cdg:
         vlcPlayer.play();
@@ -91,15 +141,17 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   @override
   Future<void> close() async {
     vlcPlayer.dispose();
-    await _audioPlayer.stop();
     await renderStream.close();
   }
 
   @override
-  Future<void> stop() async {
+  void stop() {
+    playerTypeStream.sink.add(PlayerType.none);
     switch (currentPlayerType) {
-      case PlayerType.vlc:
       case PlayerType.cdg:
+        _cdgPlayer.currentMillis = 0;
+        return vlcPlayer.stop();
+      case PlayerType.vlc:
         return vlcPlayer.stop();
       case PlayerType.none:
         return;
@@ -107,11 +159,10 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   }
 
   @override
-  Future<void> pause() async {
-    if (!isLoaded) return;
+  void pause() {
     switch (currentPlayerType) {
-      case PlayerType.vlc:
       case PlayerType.cdg:
+      case PlayerType.vlc:
         return vlcPlayer.pause();
       case PlayerType.none:
         return;
@@ -119,51 +170,45 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   }
 
   @override
-  void addToQueue(int songId, int singerId) {
-    // TODO: get song and singer from server
-    final song = SongModel(0, 0, '', '', '');
-    final singer = SingerModel(0, '');
-
-    queue.add(SongQueueItem(song, singer));
-  }
-
-  @override
-  Future<void> restart() async {
-    if (!isLoaded) return;
+  void restart() {
     switch (currentPlayerType) {
-      case PlayerType.vlc:
       case PlayerType.cdg:
+      case PlayerType.vlc:
+        _cdgPlayer.currentMillis = 0;
         vlcPlayer.seek(const Duration(milliseconds: 0));
-        break;
+        return play();
       case PlayerType.none:
         break;
     }
-    return play();
   }
 
   @override
   void skip() {
-    if (queue.isNotEmpty) {
-      final item = queue.removeFirst();
-      loadSong(item.song).then((value) => play());
-    } else {
-      stop();
-    }
+    _queueService.getNextItem().then((value) async {
+      if (value != null) {
+        await loadSong(value.song);
+        play();
+      } else {
+        stop();
+      }
+    });
   }
 
   @override
   Future<void> loadSong(SongModel song) async {
-    final path = song.path;
-    final extension = path.split('.').last;
-    switch (extension) {
+    switch (song.path.split('.').last) {
       case 'zip':
         vlcPlayer.stop();
         playerTypeStream.sink.add(PlayerType.cdg);
-        return await _loadZip(path).then((_) => isLoaded = true);
-      default:
-        _audioPlayer.stop();
+        return await _loadZip(song.path);
+      case 'mp3':
+        vlcPlayer.stop();
         playerTypeStream.sink.add(PlayerType.vlc);
-        return await _loadVideo(path).then((_) => isLoaded = true);
+        return await _loadMp3(song.path);
+      default:
+        vlcPlayer.stop();
+        playerTypeStream.sink.add(PlayerType.vlc);
+        return await _loadVideo(song.path);
     }
   }
 
@@ -175,6 +220,28 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
         return vlcPlayer.playback.isPlaying;
       case PlayerType.none:
         return false;
+    }
+  }
+
+  @override
+  void volumeDown() {
+    switch (currentPlayerType) {
+      case PlayerType.cdg:
+      case PlayerType.vlc:
+        return vlcPlayer.setVolume(vlcPlayer.general.volume - 10);
+      case PlayerType.none:
+        break;
+    }
+  }
+
+  @override
+  void volumeUp() {
+    switch (currentPlayerType) {
+      case PlayerType.cdg:
+      case PlayerType.vlc:
+        return vlcPlayer.setVolume(vlcPlayer.general.volume + 10);
+      case PlayerType.none:
+        break;
     }
   }
 }

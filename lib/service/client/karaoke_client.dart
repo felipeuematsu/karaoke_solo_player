@@ -6,9 +6,9 @@ class KaraokeClient extends AbstractClient {
   @override
   BaseOptions getBaseOptions() {
     return BaseOptions(
-      baseUrl: '$apiUrl:$apiPort',
-      connectTimeout: 5000,
-      receiveTimeout: 5000,
+      baseUrl: 'http://$apiUrl:$apiPort',
+      connectTimeout: 50000,
+      receiveTimeout: 50000,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

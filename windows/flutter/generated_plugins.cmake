@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_windows
   dart_vlc
   flutter_native_view
-  just_audio_windows
   screen_retriever
   window_manager
 )

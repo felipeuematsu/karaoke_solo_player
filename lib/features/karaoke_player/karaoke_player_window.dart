@@ -35,6 +35,10 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
             widget.videoPlayerService.restart();
           } else if (key == LogicalKeyboardKey.arrowRight) {
             widget.videoPlayerService.skip();
+          } else if (key == LogicalKeyboardKey.arrowDown) {
+            widget.videoPlayerService.volumeDown();
+          } else if (key == LogicalKeyboardKey.arrowUp) {
+            widget.videoPlayerService.volumeUp();
           }
         }
       };
