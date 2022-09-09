@@ -3,15 +3,19 @@ import 'dart:math';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_context.dart';
+import 'package:flutter_karaoke_player/config/constants.dart';
+import 'package:flutter_karaoke_player/features/karaoke_player/components/notification_overlay.dart';
+import 'package:flutter_karaoke_player/features/karaoke_player/components/qr_code_overlay.dart';
+import 'package:flutter_karaoke_player/features/karaoke_player/components/window_scaffold.dart';
+import 'package:flutter_karaoke_player/features/karaoke_player/idle_view.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_cdg_builder.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_vlc_builder.dart';
-import 'package:flutter_karaoke_player/features/karaoke_player/components/window_scaffold.dart';
-import 'package:flutter_karaoke_player/service/karaoke_main_player_controller.dart';
+import 'package:flutter_karaoke_player/service/karaoke_player_controller.dart';
 
 class KaraokePlayerWindow extends StatefulWidget {
   const KaraokePlayerWindow({Key? key, required this.videoPlayerService}) : super(key: key);
 
-  final KaraokeMainPlayerController videoPlayerService;
+  final KaraokePlayerController videoPlayerService;
 
   @override
   State<KaraokePlayerWindow> createState() => _KaraokePlayerWindowState();
@@ -45,34 +49,59 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height / CDGContext.kHeightDouble;
+    final width = MediaQuery.of(context).size.width / CDGContext.kWidthDouble;
+    final scale = MediaQuery.of(context).size.height / 1080;
+    final minScale = min(height, width);
     return KeyboardListener(
       onKeyEvent: onKey,
       autofocus: true,
       focusNode: focusNode,
       child: WindowScaffold(
         body: Center(
-          child: StreamBuilder<PlayerType>(
-            stream: widget.videoPlayerService.playerTypeStream.stream,
-            builder: (context, snapshot) {
-              switch (snapshot.data) {
-                case PlayerType.vlc:
-                  final player = widget.videoPlayerService.vlcPlayer;
-                  if (player == null) return const SizedBox();
-                  return SizedBox(height: double.infinity, width: double.infinity, child: VlcBuilder(player: player));
-                case PlayerType.cdg:
-                  final height = MediaQuery.of(context).size.height / CDGContext.kHeightDouble;
-                  final width = MediaQuery.of(context).size.width / CDGContext.kWidthDouble;
-                  final minScale = min(height, width);
-
-                  return Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.identity()..scale(minScale, minScale, 1.0),
-                    child: CdgBuilder(renderStream: widget.videoPlayerService.renderStream),
-                  );
-                default:
-                  return const SizedBox(child: Center(child: ProgressRing()));
-              }
-            },
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: StreamBuilder<PlayerType>(
+                  stream: widget.videoPlayerService.playerTypeStream.stream,
+                  builder: (context, snapshot) {
+                    switch (snapshot.data) {
+                      case PlayerType.vlc:
+                        final player = widget.videoPlayerService.vlcPlayer;
+                        if (player == null) return const SizedBox();
+                        return SizedBox(height: double.infinity, width: double.infinity, child: VlcBuilder(player: player));
+                      case PlayerType.cdg:
+                        return Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.identity()..scale(minScale, minScale, 1.0),
+                          child: CdgBuilder(renderStream: widget.videoPlayerService.renderStream),
+                        );
+                      default:
+                        return const IdleView();
+                    }
+                  },
+                ),
+              ),
+              Positioned.fill(
+                top: 100 * scale,
+                left: MediaQuery.of(context).size.width / 2,
+                child: NotificationOverlay(notificationStream: widget.videoPlayerService.notificationStream, scale: scale),
+              ),
+              Positioned(
+                bottom: 50 * scale,
+                left: 60 * scale,
+                height: 120 * scale,
+                width: 120 * scale,
+                child: FutureBuilder<String?>(
+                  future: getWebUrl(kWebPort),
+                  builder: (context, snapshot) {
+                    final data = snapshot.data;
+                    if (data == null) return const ProgressRing();
+                    return QrCodeOverlay(data: data);
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),

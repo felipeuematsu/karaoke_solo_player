@@ -1,22 +1,36 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
+import 'dart:math';
 
 import 'package:archive/archive_io.dart';
 import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_player.dart';
 import 'package:flutter_karaoke_player/config/constants.dart';
-import 'package:flutter_karaoke_player/model/song_model.dart';
-import 'package:flutter_karaoke_player/service/karaoke_main_player_controller.dart';
+import 'package:flutter_karaoke_player/service/karaoke_player_controller.dart';
 import 'package:flutter_karaoke_player/service/queue_service.dart';
+import 'package:karaoke_request_api/karaoke_request_api.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
-  KaraokeMainPlayerControllerImpl(this._queueService) {
+class KaraokePlayerControllerImpl extends KaraokePlayerController {
+  KaraokePlayerControllerImpl(this._queueService) {
+    vlcPlayer.positionStream.listen((event) async {
+      final data = jsonEncode({
+        'position': currentSongId == 0 ? 0 : event.position?.inSeconds ?? 0,
+        'songId': currentSongId,
+        'currentSinger': currentSinger,
+      });
+      if (kDebugMode) {
+        print('Sending position: $data');
+      }
+      webSocketChannel?.sink.add(data);
+    });
     vlcPlayer.playbackStream.listen((event) async {
       if (event.isCompleted && isSearching == false) {
+        currentSinger = null;
+        currentSongId = 0;
+
         isSearching = true;
         await skip();
         isSearching = false;
@@ -42,8 +56,9 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     Timer.periodic(const Duration(seconds: 2), (_) async {
       if (webSocketChannel == null) {
         try {
-          webSocketChannel = WebSocketChannel.connect(Uri.parse('ws://$apiUrl:$apiPort'));
-          webSocketChannel?.stream.listen((data) {
+          final webSocket = webSocketChannel = WebSocketChannel.connect(Uri.parse('ws://$apiUrl:$apiPort'));
+          webSocket.stream.listen((data) {
+            if (kDebugMode) print('Received: $data');
             if (data is String) {
               switch (data) {
                 case 'play':
@@ -70,17 +85,15 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
               }
             }
           });
-          print('Connected to WebSocket');
+          if (kDebugMode) {
+            print('Connected to WebSocket');
+          }
         } on Exception {
           webSocketChannel?.sink.close();
           webSocketChannel = null;
         }
       }
     });
-    // Future.delayed(const Duration(seconds: 1)).then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/mp4/test.mp4')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
-    // queue.add(SongQueueItem(SongModel(0, 0, 'title', 'artist', 'assets/cdg/test.zip'), SingerModel(0, 'singer')));
-    // Future.delayed(const Duration(seconds: 1))
-    //     .then((value) => loadSong(SongModel(0, 0, "test", 'test', 'assets/cdg/test.zip')).then((_) => Future.delayed(const Duration(seconds: 1)).then((_) => play())));
   }
 
   @override
@@ -92,7 +105,10 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   PlayerType currentPlayerType = PlayerType.none;
   WebSocketChannel? webSocketChannel;
 
+  String? currentSinger;
+  int currentSongId = 0;
   bool isSearching = false;
+
   bool get _isLoaded => _cdgPlayer.parser != null;
 
   Future<void> _loadZip(String zipPath) async {
@@ -190,8 +206,11 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
   Future<void> skip() async {
     await _queueService.getNextItem().then((value) async {
       if (value != null) {
+        currentSinger = value.singer.name;
+        currentSongId = value.song.songId ?? 0;
         await loadSong(value.song);
         play();
+        notificationStream.sink.add('Now playing: ${value.song.artist} - ${value.song.title}\n by ${value.singer.name}');
       } else {
         stop();
       }
@@ -200,19 +219,20 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
 
   @override
   Future<void> loadSong(SongModel song) async {
-    switch (song.path.split('.').last) {
+    final path = song.path ?? '';
+    switch (path.split('.').last) {
       case 'zip':
         vlcPlayer.stop();
         playerTypeStream.sink.add(PlayerType.cdg);
-        return await _loadZip(song.path);
+        return await _loadZip(path);
       case 'mp3':
         vlcPlayer.stop();
         playerTypeStream.sink.add(PlayerType.vlc);
-        return await _loadMp3(song.path);
+        return await _loadMp3(path);
       default:
         vlcPlayer.stop();
         playerTypeStream.sink.add(PlayerType.vlc);
-        return await _loadVideo(song.path);
+        return await _loadVideo(path);
     }
   }
 
@@ -232,9 +252,9 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     switch (currentPlayerType) {
       case PlayerType.cdg:
       case PlayerType.vlc:
-        return vlcPlayer.setVolume(vlcPlayer.general.volume - 10);
       case PlayerType.none:
-        break;
+        vlcPlayer.setVolume(max(vlcPlayer.general.volume - 0.05, 0.0));
+        return notificationStream.sink.add('Volume: ${(vlcPlayer.general.volume * 100).round()}');
     }
   }
 
@@ -243,9 +263,9 @@ class KaraokeMainPlayerControllerImpl extends KaraokeMainPlayerController {
     switch (currentPlayerType) {
       case PlayerType.cdg:
       case PlayerType.vlc:
-        return vlcPlayer.setVolume(vlcPlayer.general.volume + 10);
       case PlayerType.none:
-        break;
+        vlcPlayer.setVolume(min(vlcPlayer.general.volume + 0.05, 1.0));
+        return notificationStream.sink.add('Volume: ${(vlcPlayer.general.volume * 100).round()}');
     }
   }
 }

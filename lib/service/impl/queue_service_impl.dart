@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_karaoke_player/model/song_queue_item.dart';
 import 'package:flutter_karaoke_player/service/client/karaoke_client.dart';
 import 'package:flutter_karaoke_player/service/queue_service.dart';
+import 'package:karaoke_request_api/karaoke_request_api.dart';
 
 class QueueServiceImpl extends QueueService {
   const QueueServiceImpl(this.client);

@@ -1,4 +1,4 @@
-import 'package:flutter_karaoke_player/model/song_queue_item.dart';
+import 'package:karaoke_request_api/karaoke_request_api.dart';
 
 abstract class QueueService {
   const QueueService();
