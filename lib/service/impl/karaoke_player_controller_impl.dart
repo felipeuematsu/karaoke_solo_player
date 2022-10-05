@@ -19,7 +19,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       final data = jsonEncode({
         'position': currentSongId == 0 ? 0 : event.position?.inSeconds ?? 0,
         'songId': currentSongId,
-        'currentSinger': currentSinger,
+        'singer': currentSinger,
       });
       if (kDebugMode) {
         print('Sending position: $data');
