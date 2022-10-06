@@ -29,7 +29,9 @@ dependencies:
   qr_flutter: ^4.0.0
 
   karaoke_request_api:
-    path: ../karaoke_request_api
+    git:
+      url: https://github.com/felipeuematsu/karaoke_request_api
+      ref: main
 
 dev_dependencies:
   flutter_test:

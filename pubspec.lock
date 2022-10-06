@@ -257,9 +257,11 @@ packages:
   karaoke_request_api:
     dependency: "direct main"
     description:
-      path: "../karaoke_request_api"
-      relative: true
-    source: path
+      path: "."
+      ref: main
+      resolved-ref: "4ee885b01c34f71650d2eecf5e781f4b82a44c39"
+      url: "https://github.com/felipeuematsu/karaoke_request_api"
+    source: git
     version: "0.0.1"
   lints:
     dependency: transitive
