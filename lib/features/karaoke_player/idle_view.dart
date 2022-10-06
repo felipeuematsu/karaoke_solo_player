@@ -1,5 +1,4 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_karaoke_player/config/constants.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/components/qr_code_overlay.dart';
 
 class IdleView extends StatelessWidget {
@@ -13,7 +12,7 @@ class IdleView extends StatelessWidget {
       color: Colors.grey,
       child: Center(
         child: FutureBuilder<String?>(
-          future: getWebUrl(kWebPort),
+          future: getWebUrl(),
           builder: (context, snapshot) {
             if (snapshot.data == null) return const ProgressRing();
             final scale = MediaQuery.of(context).size.height / 1080;

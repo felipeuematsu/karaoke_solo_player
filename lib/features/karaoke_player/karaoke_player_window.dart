@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_context.dart';
-import 'package:flutter_karaoke_player/config/constants.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/components/notification_overlay.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/components/qr_code_overlay.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/components/window_scaffold.dart';
@@ -93,7 +92,7 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
                 height: 120 * scale,
                 width: 120 * scale,
                 child: FutureBuilder<String?>(
-                  future: getWebUrl(kWebPort),
+                  future: getWebUrl(),
                   builder: (context, snapshot) {
                     final data = snapshot.data;
                     if (data == null) return const ProgressRing();

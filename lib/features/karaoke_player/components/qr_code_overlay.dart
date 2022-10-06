@@ -14,7 +14,7 @@ class QrCodeOverlay extends StatelessWidget {
     return Opacity(
       opacity: 0.7,
       child: QrImage(
-        data: data,
+        data: data.contains('http://') ? data : 'http://$data',
         backgroundColor: material.Colors.white38,
         version: QrVersions.auto,
         foregroundColor: Colors.black,
@@ -23,12 +23,12 @@ class QrCodeOverlay extends StatelessWidget {
   }
 }
 
-Future<String?> getWebUrl(int port) async {
+Future<String?> getWebUrl() async {
   final data = await NetworkInterface.list();
   final addresses = data.expand((element) => element.addresses).where((element) => element.type == InternetAddressType.IPv4).toList();
   final ip = addresses.first.address;
   if (addresses.isEmpty) {
     return null;
   }
-  return 'http://$ip:$port';
+  return ip;
 }
