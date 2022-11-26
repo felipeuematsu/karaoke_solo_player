@@ -38,7 +38,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
     });
     playerTypeStream.stream.listen((type) => currentPlayerType = type);
     Timer.periodic(const Duration(milliseconds: 33), (timer) {
-      if (_isLoaded && currentPlayerType == PlayerType.cdg && isPlaying) {
+      if (currentPlayerType == PlayerType.cdg && isPlaying) {
         try {
           final render = _cdgPlayer.render(_cdgPlayer.currentMillis);
           if (render.isChanged) {
@@ -109,8 +109,6 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   int currentSongId = 0;
   bool isSearching = false;
 
-  bool get _isLoaded => _cdgPlayer.parser != null;
-
   Future<void> _loadZip(String zipPath) async {
     final file = File(zipPath);
     final bytes = file.readAsBytesSync();
@@ -147,7 +145,6 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   void play() {
     switch (currentPlayerType) {
       case PlayerType.vlc:
-        if (!_isLoaded) return;
         vlcPlayer.play();
         return playerTypeStream.sink.add(PlayerType.vlc);
       case PlayerType.cdg:
