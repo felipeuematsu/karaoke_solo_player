@@ -14,8 +14,8 @@ void main(List<String> args) async {
 
   WidgetsFlutterBinding.ensureInitialized();
   GetIt.I.registerSingleton<KaraokeClient>(KaraokeClient());
-  GetIt.I.registerSingleton<QueueService>(QueueServiceImpl(GetIt.I.get()));
-  GetIt.I.registerSingleton<KaraokePlayerController>(KaraokePlayerControllerImpl(GetIt.I.get()));
+  GetIt.I.registerSingleton<QueueService>(QueueServiceImpl(GetIt.I()));
+  GetIt.I.registerSingleton<KaraokePlayerController>(KaraokePlayerControllerImpl(GetIt.I()));
   runApp(const MainApp());
   doWhenWindowReady(() async {
     appWindow.alignment = Alignment.topLeft;
@@ -31,7 +31,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return FluentApp(
       title: 'Karaoke Player',
-      home: KaraokePlayerWindow(videoPlayerService: GetIt.I.get()),
+      home: KaraokePlayerWindow(videoPlayerService: GetIt.I()),
     );
   }
 }

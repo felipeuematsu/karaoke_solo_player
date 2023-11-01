@@ -17,7 +17,7 @@ class QrCodeOverlay extends StatelessWidget {
         data: data.contains('http://') ? data : 'http://$data',
         backgroundColor: material.Colors.white38,
         version: QrVersions.auto,
-        foregroundColor: Colors.black,
+        eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Colors.black),
       ),
     );
   }

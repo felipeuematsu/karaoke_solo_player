@@ -26,8 +26,8 @@ abstract class AbstractClient extends DioForNative {
 
   void _certificatesConfigure() {
     httpClientAdapter = IOHttpClientAdapter(
-      validateCertificate: (certificate, host, port) => true,
       createHttpClient: () => HttpClient(context: SecurityContext(withTrustedRoots: false)),
+      validateCertificate: (certificate, host, port) => true,
     );
   }
 
