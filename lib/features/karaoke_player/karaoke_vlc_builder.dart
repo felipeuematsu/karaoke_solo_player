@@ -3,7 +3,7 @@ import 'package:fluent_ui/fluent_ui.dart' hide Image;
 import 'package:flutter_karaoke_player/cdg/lib/cdg_context.dart';
 
 class VlcBuilder extends StatelessWidget {
-  const VlcBuilder({Key? key, required this.player}) : super(key: key);
+  const VlcBuilder({super.key, required this.player});
 
   final Player player;
 

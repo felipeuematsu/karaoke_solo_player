@@ -2,7 +2,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 
 class WindowScaffold extends StatelessWidget {
-  const WindowScaffold({Key? key, this.body, this.background}) : super(key: key);
+  const WindowScaffold({super.key, this.body, this.background});
 
   final Widget? body;
   final Widget? background;
@@ -20,7 +20,7 @@ class WindowScaffold extends StatelessWidget {
 }
 
 class _CustomMoveWindow extends StatelessWidget {
-  const _CustomMoveWindow({Key? key}) : super(key: key);
+  const _CustomMoveWindow();
 
   @override
   Widget build(BuildContext context) {

@@ -7,7 +7,7 @@ import 'package:flutter_karaoke_player/cdg/lib/cdg_render.dart';
 
 @Deprecated('Use `CdgPainter` instead. Will remain here in favor of knowledge of the underlying implementation.')
 class CdgImage extends StatefulWidget {
-  const CdgImage({Key? key, required this.renderStream}) : super(key: key);
+  const CdgImage({super.key, required this.renderStream});
 
   final Stream<CdgRender> renderStream;
 

@@ -16,7 +16,7 @@ class QueueServiceImpl extends QueueService {
     try {
       final response = await client.get('/queue/next');
       return SongQueueItem.fromMap(response.data);
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       if (e.response?.statusCode == HttpStatus.notFound) {
         return null;
       } else {

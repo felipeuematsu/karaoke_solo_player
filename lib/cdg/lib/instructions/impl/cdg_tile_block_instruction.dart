@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_constants.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_context.dart';

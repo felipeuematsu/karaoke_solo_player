@@ -12,7 +12,7 @@ import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_vlc_build
 import 'package:flutter_karaoke_player/service/karaoke_player_controller.dart';
 
 class KaraokePlayerWindow extends StatefulWidget {
-  const KaraokePlayerWindow({Key? key, required this.videoPlayerService}) : super(key: key);
+  const KaraokePlayerWindow({super.key, required this.videoPlayerService});
 
   final KaraokePlayerController videoPlayerService;
 

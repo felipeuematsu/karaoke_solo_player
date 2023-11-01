@@ -5,7 +5,7 @@ import 'package:flutter/material.dart' as material;
 import 'package:qr_flutter/qr_flutter.dart';
 
 class QrCodeOverlay extends StatelessWidget {
-  const QrCodeOverlay({Key? key, required this.data}) : super(key: key);
+  const QrCodeOverlay({super.key, required this.data});
 
   final String data;
 
@@ -13,11 +13,11 @@ class QrCodeOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Opacity(
       opacity: 0.7,
-      child: QrImage(
+      child: QrImageView(
         data: data.contains('http://') ? data : 'http://$data',
         backgroundColor: material.Colors.white38,
         version: QrVersions.auto,
-        foregroundColor: Colors.black,
+        eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Colors.black),
       ),
     );
   }

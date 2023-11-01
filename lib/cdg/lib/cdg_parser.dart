@@ -63,30 +63,18 @@ class CDGParser {
     return instructions;
   }
 
-  CDGInstruction? _create(Type type, Uint8List packet) {
-    switch (type) {
-      case CDGMemoryPresetInstruction:
-        return CDGMemoryPresetInstruction(packet);
-      case CDGBorderPresetInstruction:
-        return CDGBorderPresetInstruction(packet);
-      case CDGTileBlockInstruction:
-        return CDGTileBlockInstruction(packet);
-      case CDGScrollPresetInstruction:
-        return CDGScrollPresetInstruction(packet);
-      case CDGScrollCopyInstruction:
-        return CDGScrollCopyInstruction(packet);
-      case CDGSetKeyColorInstruction:
-        return CDGSetKeyColorInstruction(packet);
-      case CDGLoadCLUTLowInstruction:
-        return CDGLoadCLUTLowInstruction(packet);
-      case CDGLoadCLUTHighInstruction:
-        return CDGLoadCLUTHighInstruction(packet);
-      case CDGTileBlockXORInstruction:
-        return CDGTileBlockXORInstruction(packet);
-    }
-
-    return null;
-  }
+  CDGInstruction? _create(Type type, Uint8List packet) => switch (type) {
+        const (CDGMemoryPresetInstruction) => CDGMemoryPresetInstruction(packet),
+        const (CDGBorderPresetInstruction) => CDGBorderPresetInstruction(packet),
+        const (CDGTileBlockInstruction) => CDGTileBlockInstruction(packet),
+        const (CDGScrollPresetInstruction) => CDGScrollPresetInstruction(packet),
+        const (CDGScrollCopyInstruction) => CDGScrollCopyInstruction(packet),
+        const (CDGSetKeyColorInstruction) => CDGSetKeyColorInstruction(packet),
+        const (CDGLoadCLUTLowInstruction) => CDGLoadCLUTLowInstruction(packet),
+        const (CDGLoadCLUTHighInstruction) => CDGLoadCLUTHighInstruction(packet),
+        const (CDGTileBlockXORInstruction) => CDGTileBlockXORInstruction(packet),
+        _ => null
+      };
 
   CDGInstruction? parse(Uint8List packet) {
     if ((packet[0] & kCommandMask) == kCdgCommand) {
