@@ -52,31 +52,31 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       if (webSocketChannel == null) {
         try {
           final webSocket = webSocketChannel = WebSocketChannel.connect(Uri.parse('ws://$apiUrl:$apiPort'));
+          decodeWebSocketJson(String data) async {
+            try {
+              final decoded = json.decode(data);
+              if (decoded['volume'] != null) {
+                return vlcPlayer.setVolume(decoded['volume']);
+              }
+
+              return loadSong(SongModel.fromMap(decoded));
+            } catch (_) {
+              // ignore
+            }
+          }
+
           webSocket.stream.listen((data) async {
             if (data is String) {
-              switch (data) {
-                case 'play':
-                  return play();
-                case 'pause':
-                  return pause();
-                case 'stop':
-                  return stop();
-                case 'restart':
-                  return restart();
-                case 'skip':
-                  skip();
-                  return;
-                case 'volumeDown':
-                  return volumeDown();
-                case 'volumeUp':
-                  return volumeUp();
-                default:
-                  try {
-                    loadSong(SongModel.fromJson(json.decode(data)));
-                  } catch (_) {
-                    // ignore
-                  }
-              }
+              return switch (data) {
+                'play' => play(),
+                'pause' => pause(),
+                'stop' => stop(),
+                'restart' => restart(),
+                'skip' => skip(),
+                'volumeDown' => volumeDown(),
+                'volumeUp' => volumeUp(),
+                _ => decodeWebSocketJson(data)
+              };
             }
           });
         } on Exception {
