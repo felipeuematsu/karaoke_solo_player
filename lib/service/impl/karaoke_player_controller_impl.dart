@@ -17,6 +17,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   KaraokePlayerControllerImpl(this._queueService) {
     vlcPlayer.positionStream.listen((event) async {
       final data = jsonEncode({
+        'playing': isPlaying,
         'position': currentSongId == 0 ? 0 : event.position?.inSeconds ?? 0,
         'songId': currentSongId,
         'singer': currentSinger,
