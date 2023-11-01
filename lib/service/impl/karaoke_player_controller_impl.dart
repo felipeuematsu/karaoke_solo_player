@@ -79,6 +79,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
               };
             }
           });
+            print('Connected to WebSocket');
         } on Exception {
           webSocketChannel?.sink.close();
           webSocketChannel = null;
