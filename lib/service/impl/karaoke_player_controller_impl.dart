@@ -4,30 +4,27 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:archive/archive_io.dart';
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_player.dart';
 import 'package:flutter_karaoke_player/config/constants.dart';
 import 'package:flutter_karaoke_player/service/karaoke_player_controller.dart';
 import 'package:flutter_karaoke_player/service/queue_service.dart';
 import 'package:karaoke_request_api/karaoke_request_api.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class KaraokePlayerControllerImpl extends KaraokePlayerController {
   KaraokePlayerControllerImpl(this._queueService) {
-    vlcPlayer.positionStream.listen((event) async {
+    mediaPlayer.stream.position.listen((position) async {
       final data = jsonEncode({
-        'position': currentSongId == 0 ? 0 : event.position?.inSeconds ?? 0,
+        'position': currentSongId == 0 ? 0 : position.inSeconds,
         'songId': currentSongId,
         'singer': currentSinger,
       });
-      if (kDebugMode) {
-        print('Sending position: $data');
-      }
       webSocketChannel?.sink.add(data);
     });
-    vlcPlayer.playbackStream.listen((event) async {
-      if (event.isCompleted && isSearching == false) {
+    mediaPlayer.stream.completed.listen((isCompleted) async {
+      if (isCompleted && isSearching == false) {
         currentSinger = null;
         currentSongId = 0;
 
@@ -45,9 +42,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
             renderStream.sink.add(render);
           }
         } catch (e) {
-          if (kDebugMode) {
-            print(e);
-          }
+          // ignore
         } finally {
           _cdgPlayer.currentMillis += 33;
         }
@@ -57,8 +52,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       if (webSocketChannel == null) {
         try {
           final webSocket = webSocketChannel = WebSocketChannel.connect(Uri.parse('ws://$apiUrl:$apiPort'));
-          webSocket.stream.listen((data) {
-            if (kDebugMode) print('Received: $data');
+          webSocket.stream.listen((data) async {
             if (data is String) {
               switch (data) {
                 case 'play':
@@ -78,16 +72,13 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
                   return volumeUp();
                 default:
                   try {
-                    loadSong(SongModel.fromMap(json.decode(data)));
+                    loadSong(SongModel.fromJson(json.decode(data)));
                   } catch (_) {
                     // ignore
                   }
               }
             }
           });
-          if (kDebugMode) {
-            print('Connected to WebSocket');
-          }
         } on Exception {
           webSocketChannel?.sink.close();
           webSocketChannel = null;
@@ -97,7 +88,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  final Player vlcPlayer = Player(id: 14325);
+  final Player mediaPlayer = Player();
   final _cdgPlayer = CDGPlayer();
   final _zipDecoder = ZipDecoder();
   final QueueService _queueService;
@@ -121,7 +112,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       if (file.name.contains('.mp3')) {
         final tempFile = File('temp');
         await tempFile.writeAsBytes(content);
-        vlcPlayer.open(Media.file(tempFile));
+        mediaPlayer.open(Media(tempFile.path));
       }
     }
   }
@@ -132,23 +123,21 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
     final mp3 = File(mp3Path);
     final cdg = File(cdgPath);
     cdg.exists().then((value) => cdg.readAsBytes().then((value) => _cdgPlayer.load(value.buffer)));
-    mp3.exists().then((value) => vlcPlayer.open(Media.file(mp3)));
+    mp3.exists().then((value) => mediaPlayer.open(Media(mp3Path)));
   }
 
   Future<void> _loadVideo(String path) async {
-    final file = File(path);
-    final source = Media.file(file);
-    vlcPlayer.open(source, autoStart: false);
+    mediaPlayer.open(Media(path), play: false);
   }
 
   @override
   void play() {
     switch (currentPlayerType) {
       case PlayerType.vlc:
-        vlcPlayer.play();
+        mediaPlayer.play();
         return playerTypeStream.sink.add(PlayerType.vlc);
       case PlayerType.cdg:
-        vlcPlayer.play();
+        mediaPlayer.play();
         return playerTypeStream.sink.add(PlayerType.cdg);
       case PlayerType.none:
         break;
@@ -157,32 +146,32 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
 
   @override
   Future<void> close() async {
-    vlcPlayer.dispose();
+    mediaPlayer.dispose();
     await renderStream.close();
   }
 
   @override
-  void stop() {
+  Future<void> stop() {
     playerTypeStream.sink.add(PlayerType.none);
     switch (currentPlayerType) {
       case PlayerType.cdg:
         _cdgPlayer.currentMillis = 0;
-        return vlcPlayer.stop();
+        return mediaPlayer.stop();
       case PlayerType.vlc:
-        return vlcPlayer.stop();
+        return mediaPlayer.stop();
       case PlayerType.none:
-        return;
+        return Future.value();
     }
   }
 
   @override
-  void pause() {
+  Future<void> pause() {
     switch (currentPlayerType) {
       case PlayerType.cdg:
       case PlayerType.vlc:
-        return vlcPlayer.pause();
+        return mediaPlayer.pause();
       case PlayerType.none:
-        return;
+        return Future.value();
     }
   }
 
@@ -192,7 +181,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       case PlayerType.cdg:
       case PlayerType.vlc:
         _cdgPlayer.currentMillis = 0;
-        vlcPlayer.seek(const Duration(milliseconds: 0));
+        mediaPlayer.seek(const Duration(milliseconds: 0));
         return play();
       case PlayerType.none:
         break;
@@ -219,15 +208,15 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
     final path = song.path ?? '';
     switch (path.split('.').last) {
       case 'zip':
-        vlcPlayer.stop();
+        mediaPlayer.stop();
         playerTypeStream.sink.add(PlayerType.cdg);
         return await _loadZip(path);
       case 'mp3':
-        vlcPlayer.stop();
+        mediaPlayer.stop();
         playerTypeStream.sink.add(PlayerType.vlc);
         return await _loadMp3(path);
       default:
-        vlcPlayer.stop();
+        mediaPlayer.stop();
         playerTypeStream.sink.add(PlayerType.vlc);
         return await _loadVideo(path);
     }
@@ -238,7 +227,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
     switch (currentPlayerType) {
       case PlayerType.vlc:
       case PlayerType.cdg:
-        return vlcPlayer.playback.isPlaying;
+        return mediaPlayer.state.playing;
       case PlayerType.none:
         return false;
     }
@@ -250,8 +239,8 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       case PlayerType.cdg:
       case PlayerType.vlc:
       case PlayerType.none:
-        vlcPlayer.setVolume(max(vlcPlayer.general.volume - 0.05, 0.0));
-        return notificationStream.sink.add('Volume: ${(vlcPlayer.general.volume * 100).round()}');
+        mediaPlayer.setVolume(max(mediaPlayer.state.volume - 0.05, 0.0));
+        return notificationStream.sink.add('Volume: ${(mediaPlayer.state.volume * 100).round()}');
     }
   }
 
@@ -261,8 +250,8 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       case PlayerType.cdg:
       case PlayerType.vlc:
       case PlayerType.none:
-        vlcPlayer.setVolume(min(vlcPlayer.general.volume + 0.05, 1.0));
-        return notificationStream.sink.add('Volume: ${(vlcPlayer.general.volume * 100).round()}');
+        mediaPlayer.setVolume(min(mediaPlayer.state.volume + 0.05, 1.0));
+        return notificationStream.sink.add('Volume: ${(mediaPlayer.state.volume * 100).round()}');
     }
   }
 }

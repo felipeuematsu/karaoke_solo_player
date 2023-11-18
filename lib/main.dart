@@ -1,5 +1,4 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_player_window.dart';
 import 'package:flutter_karaoke_player/service/client/karaoke_client.dart';
@@ -8,9 +7,10 @@ import 'package:flutter_karaoke_player/service/impl/queue_service_impl.dart';
 import 'package:flutter_karaoke_player/service/karaoke_player_controller.dart';
 import 'package:flutter_karaoke_player/service/queue_service.dart';
 import 'package:get_it/get_it.dart';
+import 'package:media_kit/media_kit.dart';
 
 void main(List<String> args) async {
-  await DartVLC.initialize();
+  MediaKit.ensureInitialized();
 
   WidgetsFlutterBinding.ensureInitialized();
   GetIt.I.registerSingleton<KaraokeClient>(KaraokeClient());

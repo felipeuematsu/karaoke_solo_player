@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_render.dart';
 import 'package:karaoke_request_api/karaoke_request_api.dart';
+import 'package:media_kit/media_kit.dart';
 
 enum PlayerType { vlc, cdg, none }
 
@@ -11,7 +11,7 @@ abstract class KaraokePlayerController {
   final playerTypeStream = StreamController<PlayerType>.broadcast();
   final notificationStream = StreamController<String>.broadcast();
 
-  Player? get vlcPlayer;
+  Player? get mediaPlayer;
 
   bool get isPlaying;
 

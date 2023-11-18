@@ -8,7 +8,7 @@ import 'package:flutter_karaoke_player/cdg/lib/cdg_context.dart';
 import 'package:flutter_karaoke_player/cdg/lib/cdg_render.dart';
 
 class CdgBuilder extends StatefulWidget {
-  const CdgBuilder({Key? key, required this.renderStream}) : super(key: key);
+  const CdgBuilder({super.key, required this.renderStream});
 
   final StreamController<CdgRender> renderStream;
 

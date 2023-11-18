@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 
 class NotificationOverlay extends StatefulWidget {
-  const NotificationOverlay({Key? key, required this.notificationStream, required this.scale}) : super(key: key);
+  const NotificationOverlay({super.key, required this.notificationStream, required this.scale});
 
   final StreamController<String> notificationStream;
   final double scale;

@@ -12,7 +12,7 @@ import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_vlc_build
 import 'package:flutter_karaoke_player/service/karaoke_player_controller.dart';
 
 class KaraokePlayerWindow extends StatefulWidget {
-  const KaraokePlayerWindow({Key? key, required this.videoPlayerService}) : super(key: key);
+  const KaraokePlayerWindow({super.key, required this.videoPlayerService});
 
   final KaraokePlayerController videoPlayerService;
 
@@ -66,7 +66,7 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
                   builder: (context, snapshot) {
                     switch (snapshot.data) {
                       case PlayerType.vlc:
-                        final player = widget.videoPlayerService.vlcPlayer;
+                        final player = widget.videoPlayerService.mediaPlayer;
                         if (player == null) return const SizedBox();
                         return SizedBox(height: double.infinity, width: double.infinity, child: VlcBuilder(player: player));
                       case PlayerType.cdg:

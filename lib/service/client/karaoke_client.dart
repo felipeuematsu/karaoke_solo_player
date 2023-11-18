@@ -7,8 +7,8 @@ class KaraokeClient extends AbstractClient {
   BaseOptions getBaseOptions() {
     return BaseOptions(
       baseUrl: 'http://$apiUrl:$apiPort',
-      connectTimeout: 50000,
-      receiveTimeout: 50000,
+      connectTimeout: const Duration(milliseconds: 50000),
+      receiveTimeout: const Duration(milliseconds: 50000),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
