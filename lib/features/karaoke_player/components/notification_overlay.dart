@@ -52,7 +52,7 @@ class _NotificationOverlayState extends State<NotificationOverlay> with SingleTi
           ],
           Text(
             snapshot.data?['message'] ?? '',
-            textScaleFactor: widget.scale,
+            textScaler: TextScaler.linear(widget.scale),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 48,
