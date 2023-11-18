@@ -54,11 +54,7 @@ class _NotificationOverlayState extends State<NotificationOverlay> with SingleTi
             snapshot.data?['message'] ?? '',
             textScaler: TextScaler.linear(widget.scale),
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 48,
-              color: Colors.white,
-              shadows: [Shadow(blurRadius: 16, offset: Offset(0, 0), color: Colors.black)],
-            ),
+            style: const TextStyle(fontSize: 48, color: Colors.white, shadows: [Shadow(blurRadius: 16)]),
           ),
         ]),
       ),

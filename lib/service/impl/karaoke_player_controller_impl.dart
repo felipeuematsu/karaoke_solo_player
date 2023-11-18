@@ -59,7 +59,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
                 return setVolume(decoded['volume'] as int);
               }
 
-              return loadSong(SongModel.fromMap(decoded));
+              return loadSong(SongModel.fromJson(decoded));
             } catch (_) {
               // ignore
             }
@@ -260,7 +260,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
 
   @override
   void setVolume(int volume) {
-    vlcPlayer.setVolume(min(1.0, max(0.0, volume / 100)));
-    return notificationStream.sink.add({'message': 'Volume: ${(vlcPlayer.general.volume * 100).round()}'});
+    mediaPlayer.setVolume(min(1.0, max(0.0, volume / 100)));
+    return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume * 100).round()}'});
   }
 }
