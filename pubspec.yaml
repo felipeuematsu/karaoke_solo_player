@@ -27,6 +27,7 @@ dependencies:
   get_it: ^7.2.0
   web_socket_channel: ^2.2.0
   qr_flutter: ^4.0.0
+  gap: ^3.0.1
 
   karaoke_request_api:
     hosted: https://dart.pkg.jetbrains.space/flup/p/main/flup/

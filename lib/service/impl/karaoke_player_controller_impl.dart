@@ -56,7 +56,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
             try {
               final decoded = json.decode(data);
               if (decoded['volume'] != null) {
-                return vlcPlayer.setVolume(decoded['volume']);
+                return setVolume(decoded['volume'] as int);
               }
 
               return loadSong(SongModel.fromMap(decoded));
@@ -197,7 +197,9 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
         currentSongId = value.song.songId ?? 0;
         await loadSong(value.song);
         play();
-        notificationStream.sink.add('Now playing: ${value.song.artist} - ${value.song.title}\n by ${value.singer.name}');
+        notificationStream.sink.add({
+          'message': 'Now playing: ${value.song.artist} - ${value.song.title}\n by ${value.singer.name}',
+        });
       } else {
         stop();
       }
@@ -241,7 +243,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       case PlayerType.vlc:
       case PlayerType.none:
         mediaPlayer.setVolume(max(mediaPlayer.state.volume - 0.05, 0.0));
-        return notificationStream.sink.add('Volume: ${(mediaPlayer.state.volume * 100).round()}');
+        return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume * 100).round()}'});
     }
   }
 
@@ -252,7 +254,13 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       case PlayerType.vlc:
       case PlayerType.none:
         mediaPlayer.setVolume(min(mediaPlayer.state.volume + 0.05, 1.0));
-        return notificationStream.sink.add('Volume: ${(mediaPlayer.state.volume * 100).round()}');
+        return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume * 100).round()}'});
     }
+  }
+
+  @override
+  void setVolume(int volume) {
+    vlcPlayer.setVolume(min(1.0, max(0.0, volume / 100)));
+    return notificationStream.sink.add({'message': 'Volume: ${(vlcPlayer.general.volume * 100).round()}'});
   }
 }
