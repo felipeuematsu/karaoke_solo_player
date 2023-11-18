@@ -31,9 +31,10 @@ dependencies:
   karaoke_request_api:
     hosted: https://dart.pkg.jetbrains.space/flup/p/main/flup/
     version: ^1.8.4
-  media_kit_video: ^1.0.2
+
+  media_kit_video: ^1.2.4
   media_kit_libs_video: ^1.0.4
-  media_kit_libs_audio: ^1.0.4
+#  media_kit_libs_audio: ^1.0.4
 
 dev_dependencies:
   flutter_test:
@@ -42,6 +43,7 @@ dev_dependencies:
   msix: ^3.6.3
 dependency_overrides:
   intl: 0.18.1
+  win32: ^4.0.0
 flutter:
   uses-material-design: true
 
