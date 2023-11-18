@@ -32,6 +32,7 @@ dependencies:
     git:
       url: https://github.com/felipeuematsu/karaoke_request_api
       ref: main
+  gap: ^3.0.1
 
 dev_dependencies:
   flutter_test:
