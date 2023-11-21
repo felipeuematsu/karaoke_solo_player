@@ -9,6 +9,7 @@ import 'package:flutter_karaoke_player/features/karaoke_player/components/window
 import 'package:flutter_karaoke_player/features/karaoke_player/idle_view.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_cdg_builder.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_vlc_builder.dart';
+import 'package:flutter_karaoke_player/features/settings/view/settings_view.dart';
 import 'package:flutter_karaoke_player/service/karaoke_player_controller.dart';
 
 class KaraokePlayerWindow extends StatefulWidget {
@@ -25,24 +26,25 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
 
   final focusNode = FocusNode();
 
-  Function(KeyEvent) get onKey => (KeyEvent event) {
-        if (event is KeyDownEvent) {
-          final key = event.logicalKey;
-          if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.space) {
-            if (widget.videoPlayerService.isPlaying) {
-              widget.videoPlayerService.pause();
-            } else {
-              widget.videoPlayerService.play();
-            }
-          } else if (key == LogicalKeyboardKey.arrowLeft) {
-            widget.videoPlayerService.restart();
-          } else if (key == LogicalKeyboardKey.arrowRight) {
-            widget.videoPlayerService.skip();
-          } else if (key == LogicalKeyboardKey.arrowDown) {
-            widget.videoPlayerService.volumeDown();
-          } else if (key == LogicalKeyboardKey.arrowUp) {
-            widget.videoPlayerService.volumeUp();
-          }
+  Function(KeyEvent) get onKey => (KeyEvent event) async {
+        switch (event) {
+          case KeyDownEvent():
+            return switch (event.logicalKey) {
+              LogicalKeyboardKey.space => widget.videoPlayerService.isPlaying ? widget.videoPlayerService.pause() : widget.videoPlayerService.play(),
+              LogicalKeyboardKey.arrowLeft => widget.videoPlayerService.restart(),
+              LogicalKeyboardKey.arrowRight => widget.videoPlayerService.skip(),
+              LogicalKeyboardKey.arrowDown => widget.videoPlayerService.volumeDown(),
+              LogicalKeyboardKey.arrowUp => widget.videoPlayerService.volumeUp(),
+              LogicalKeyboardKey.escape => Navigator.of(context).push(
+                  FluentDialogRoute(
+                    context: context,
+
+                    builder: (context) => const SettingsView(),
+                    settings: const RouteSettings(name: 'Settings'),
+                  ),
+                ),
+              _ => Future.value(),
+            };
         }
       };
 
@@ -64,20 +66,16 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
                 child: StreamBuilder<PlayerType>(
                   stream: widget.videoPlayerService.playerTypeStream.stream,
                   builder: (context, snapshot) {
-                    switch (snapshot.data) {
-                      case PlayerType.vlc:
-                        final player = widget.videoPlayerService.mediaPlayer;
-                        if (player == null) return const SizedBox();
-                        return SizedBox(height: double.infinity, width: double.infinity, child: VlcBuilder(player: player));
-                      case PlayerType.cdg:
-                        return Transform(
+                    final player = widget.videoPlayerService.mediaPlayer;
+                    return switch (snapshot.data) {
+                      PlayerType.vlc => player == null ? const SizedBox() : MediaKitBuilder(player: player),
+                      PlayerType.cdg => Transform(
                           alignment: Alignment.center,
                           transform: Matrix4.identity()..scale(minScale, minScale, 1.0),
                           child: CdgBuilder(renderStream: widget.videoPlayerService.renderStream),
-                        );
-                      default:
-                        return const IdleView();
-                    }
+                        ),
+                      _ => const IdleView(),
+                    };
                   },
                 ),
               ),

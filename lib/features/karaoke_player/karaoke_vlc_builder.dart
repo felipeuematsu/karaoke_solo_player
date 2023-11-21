@@ -3,16 +3,16 @@ import 'package:flutter_karaoke_player/cdg/lib/cdg_context.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-class VlcBuilder extends StatefulWidget {
-  const VlcBuilder({super.key, required this.player});
+class MediaKitBuilder extends StatefulWidget {
+  const MediaKitBuilder({super.key, required this.player});
 
   final Player player;
 
   @override
-  State<VlcBuilder> createState() => _VlcBuilderState();
+  State<MediaKitBuilder> createState() => _MediaKitBuilderState();
 }
 
-class _VlcBuilderState extends State<VlcBuilder> {
+class _MediaKitBuilderState extends State<MediaKitBuilder> {
   late final controller = VideoController(widget.player);
 
   @override
