@@ -20,6 +20,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
         'position': currentSongId == 0 ? 0 : position.inSeconds,
         'songId': currentSongId,
         'singer': currentSinger,
+        'playing': isPlaying,
       });
       webSocketChannel?.sink.add(data);
     });
