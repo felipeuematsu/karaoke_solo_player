@@ -19,6 +19,7 @@ class _MediaKitBuilderState extends State<MediaKitBuilder> {
   Widget build(BuildContext context) {
     return Video(
       controller: controller,
+      controls: NoVideoControls,
       height: CDGContext.kHeightDouble,
       width: CDGContext.kWidthDouble,
     );

@@ -8,7 +8,7 @@ import 'package:flutter_karaoke_player/features/karaoke_player/components/qr_cod
 import 'package:flutter_karaoke_player/features/karaoke_player/components/window_scaffold.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/idle_view.dart';
 import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_cdg_builder.dart';
-import 'package:flutter_karaoke_player/features/karaoke_player/karaoke_vlc_builder.dart';
+import 'package:flutter_karaoke_player/features/karaoke_player/media_kit_builder.dart';
 import 'package:flutter_karaoke_player/features/settings/view/settings_view.dart';
 import 'package:flutter_karaoke_player/service/karaoke_player_controller.dart';
 
