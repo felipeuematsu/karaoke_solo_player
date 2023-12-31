@@ -80,7 +80,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
               };
             }
           });
-            print('Connected to WebSocket');
+          print('Connected to WebSocket');
         } on Exception {
           webSocketChannel?.sink.close();
           webSocketChannel = null;
@@ -112,9 +112,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
         _cdgPlayer.load(content.buffer);
       }
       if (file.name.contains('.mp3')) {
-        final tempFile = File('temp');
-        await tempFile.writeAsBytes(content);
-        mediaPlayer.open(Media(tempFile.path));
+        mediaPlayer.open(await Media.memory(content));
       }
     }
   }
@@ -133,7 +131,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  void play() {
+  void play() async {
     switch (currentPlayerType) {
       case PlayerType.vlc:
         mediaPlayer.play();
@@ -153,7 +151,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  Future<void> stop() {
+  Future<void> stop() async {
     playerTypeStream.sink.add(PlayerType.none);
     switch (currentPlayerType) {
       case PlayerType.cdg:
@@ -162,18 +160,16 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       case PlayerType.vlc:
         return mediaPlayer.stop();
       case PlayerType.none:
-        return Future.value();
     }
   }
 
   @override
-  Future<void> pause() {
+  Future<void> pause() async {
     switch (currentPlayerType) {
       case PlayerType.cdg:
       case PlayerType.vlc:
         return mediaPlayer.pause();
       case PlayerType.none:
-        return Future.value();
     }
   }
 
@@ -217,7 +213,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
         return await _loadZip(path);
       case 'mp3':
         mediaPlayer.stop();
-        playerTypeStream.sink.add(PlayerType.vlc);
+        playerTypeStream.sink.add(PlayerType.cdg);
         return await _loadMp3(path);
       default:
         mediaPlayer.stop();
@@ -243,8 +239,8 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       case PlayerType.cdg:
       case PlayerType.vlc:
       case PlayerType.none:
-        mediaPlayer.setVolume(max(mediaPlayer.state.volume - 0.05, 0.0));
-        return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume * 100).round()}'});
+        mediaPlayer.setVolume(max(mediaPlayer.state.volume - 5, 0.0));
+        return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume).round()}'});
     }
   }
 
@@ -254,14 +250,14 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       case PlayerType.cdg:
       case PlayerType.vlc:
       case PlayerType.none:
-        mediaPlayer.setVolume(min(mediaPlayer.state.volume + 0.05, 1.0));
-        return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume * 100).round()}'});
+        mediaPlayer.setVolume(min(mediaPlayer.state.volume + 5, 100));
+        return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume).round()}'});
     }
   }
 
   @override
   void setVolume(int volume) {
-    mediaPlayer.setVolume(min(1.0, max(0.0, volume / 100)));
-    return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume * 100).round()}'});
+    mediaPlayer.setVolume(max(min(volume, 100.0), 0).toDouble());
+    return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume).round()}'});
   }
 }

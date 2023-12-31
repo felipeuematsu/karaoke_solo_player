@@ -38,7 +38,6 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
               LogicalKeyboardKey.escape => Navigator.of(context).push(
                   FluentDialogRoute(
                     context: context,
-
                     builder: (context) => const SettingsView(),
                     settings: const RouteSettings(name: 'Settings'),
                   ),
@@ -54,24 +53,24 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
     final width = MediaQuery.of(context).size.width / CDGContext.kWidthDouble;
     final scale = MediaQuery.of(context).size.height / 1080;
     final minScale = min(height, width);
+    print('scale: $scale, minScale: $minScale');
     return KeyboardListener(
       onKeyEvent: onKey,
       autofocus: true,
       focusNode: focusNode,
       child: WindowScaffold(
         body: Center(
-          child: Stack(
-            children: [
-              Positioned.fill(
+          child: Stack(children: [
+            Positioned.fill(
+              child: Center(
                 child: StreamBuilder<PlayerType>(
                   stream: widget.videoPlayerService.playerTypeStream.stream,
                   builder: (context, snapshot) {
-                    final player = widget.videoPlayerService.mediaPlayer;
                     return switch (snapshot.data) {
-                      PlayerType.vlc => player == null ? const SizedBox() : MediaKitBuilder(player: player),
-                      PlayerType.cdg => Transform(
+                      PlayerType.vlc => MediaKitBuilder(player: widget.videoPlayerService.mediaPlayer),
+                      PlayerType.cdg => Transform.scale(
+                          scale: minScale,
                           alignment: Alignment.center,
-                          transform: Matrix4.identity()..scale(minScale, minScale, 1.0),
                           child: CdgBuilder(renderStream: widget.videoPlayerService.renderStream),
                         ),
                       _ => const IdleView(),
@@ -79,27 +78,27 @@ class _KaraokePlayerWindowState extends State<KaraokePlayerWindow> {
                   },
                 ),
               ),
-              Positioned.fill(
-                top: 100 * scale,
-                left: MediaQuery.of(context).size.width / 2,
-                child: NotificationOverlay(notificationStream: widget.videoPlayerService.notificationStream, scale: scale),
+            ),
+            Positioned.fill(
+              top: 100 * scale,
+              right: 48 * scale,
+              child: NotificationOverlay(notificationStream: widget.videoPlayerService.notificationStream, scale: scale),
+            ),
+            Positioned(
+              bottom: 50 * scale,
+              left: 60 * scale,
+              height: 120 * scale,
+              width: 120 * scale,
+              child: FutureBuilder<String?>(
+                future: getWebUrl(),
+                builder: (context, snapshot) {
+                  final data = snapshot.data;
+                  if (data == null) return const ProgressRing();
+                  return QrCodeOverlay(data: data);
+                },
               ),
-              Positioned(
-                bottom: 50 * scale,
-                left: 60 * scale,
-                height: 120 * scale,
-                width: 120 * scale,
-                child: FutureBuilder<String?>(
-                  future: getWebUrl(),
-                  builder: (context, snapshot) {
-                    final data = snapshot.data;
-                    if (data == null) return const ProgressRing();
-                    return QrCodeOverlay(data: data);
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+          ]),
         ),
       ),
     );

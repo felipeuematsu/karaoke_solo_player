@@ -1,5 +1,4 @@
 import 'package:fluent_ui/fluent_ui.dart' hide Image;
-import 'package:flutter_karaoke_player/cdg/lib/cdg_context.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -19,9 +18,9 @@ class _MediaKitBuilderState extends State<MediaKitBuilder> {
   Widget build(BuildContext context) {
     return Video(
       controller: controller,
+      fit: BoxFit.contain,
+
       controls: NoVideoControls,
-      height: CDGContext.kHeightDouble,
-      width: CDGContext.kWidthDouble,
     );
   }
 }

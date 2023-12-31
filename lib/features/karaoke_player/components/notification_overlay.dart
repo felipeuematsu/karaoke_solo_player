@@ -41,7 +41,7 @@ class _NotificationOverlayState extends State<NotificationOverlay> with SingleTi
       stream: widget.notificationStream.stream,
       builder: (context, snapshot) => FadeTransition(
         opacity: controller,
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
+        child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
           if (snapshot.data?['image'] != null) ...[
             Image.network(
               snapshot.data?['image'] ?? '',

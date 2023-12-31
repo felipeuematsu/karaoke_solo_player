@@ -11,7 +11,7 @@ abstract class KaraokePlayerController {
   final playerTypeStream = StreamController<PlayerType>.broadcast();
   final notificationStream = StreamController<Map<String, String>>.broadcast();
 
-  Player? get mediaPlayer;
+  Player get mediaPlayer;
 
   bool get isPlaying;
 
