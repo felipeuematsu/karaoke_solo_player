@@ -23,9 +23,10 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
         'singer': currentSinger,
         'playing': isPlaying,
       });
+      webSocketChannel?.sink.add(jsonEncode({'volume': mediaPlayer.state.volume.round()}));
       webSocketChannel?.sink.add(data);
     });
-    mediaPlayer.stream.volume.listen((volume) async => webSocketChannel?.sink.add(jsonEncode({'volume': volume.round()})));
+    mediaPlayer.stream.volume.listen((volume) => webSocketChannel?.sink.add(jsonEncode({'volume': volume.round()})));
     mediaPlayer.stream.completed.listen((isCompleted) async {
       if (isCompleted && isSearching == false) {
         currentSinger = null;
@@ -94,7 +95,8 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  final Player mediaPlayer = Player()..setVolume(70);
+  final Player mediaPlayer = Player()
+    ..setVolume(70);
   final _cdgPlayer = CDGPlayer();
   final _zipDecoder = ZipDecoder();
   final QueueService _queueService;
@@ -122,7 +124,9 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   Future<void> _loadMp3(String mp3Path) async {
-    final basePath = mp3Path.split('.').first;
+    final basePath = mp3Path
+        .split('.')
+        .first;
     final cdgPath = '$basePath.cdg';
     final mp3 = File(mp3Path);
     final cdg = File(cdgPath);
@@ -211,7 +215,9 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   @override
   Future<void> loadSong(SongModel song) async {
     final path = song.path ?? '';
-    switch (path.split('.').last) {
+    switch (path
+        .split('.')
+        .last) {
       case 'zip':
         mediaPlayer.stop();
         playerTypeStream.sink.add(PlayerType.cdg);
@@ -254,7 +260,6 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
 
   @override
   Future<void> setVolume(int volume) async {
-
     var newVolume = max(min(volume, 100.0), 0.0).toDouble();
     await mediaPlayer.setVolume(newVolume);
     return notificationStream.sink.add({'message': 'Volume: ${(newVolume).round()}'});
