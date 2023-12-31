@@ -14,13 +14,15 @@ import 'package:media_kit/media_kit.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class KaraokePlayerControllerImpl extends KaraokePlayerController {
+  late Timer timer;
+
   KaraokePlayerControllerImpl(this._queueService) {
-    mediaPlayer.stream.position.listen((position) async {
+    timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       final data = jsonEncode({
-        'position': currentSongId == null ? 0 : position.inSeconds,
+        'position': currentSongId == null ? 0 : mediaPlayer.state.position.inSeconds,
         'songId': currentSongId,
         'singer': currentSinger,
-        'playing': isPlaying,
+        'isPlaying': currentSongId == null ? false : isPlaying,
       });
       webSocketChannel?.sink.add(jsonEncode({'volume': mediaPlayer.state.volume.round()}));
       webSocketChannel?.sink.add(data);
@@ -93,8 +95,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  final Player mediaPlayer = Player()
-    ..setVolume(70);
+  final Player mediaPlayer = Player()..setVolume(70);
   final _cdgPlayer = CDGPlayer();
   final _zipDecoder = ZipDecoder();
   final QueueService _queueService;
@@ -122,9 +123,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   Future<void> _loadMp3(String mp3Path) async {
-    final basePath = mp3Path
-        .split('.')
-        .first;
+    final basePath = mp3Path.split('.').first;
     final cdgPath = '$basePath.cdg';
     final mp3 = File(mp3Path);
     final cdg = File(cdgPath);
@@ -213,9 +212,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   @override
   Future<void> loadSong(SongModel song) async {
     final path = song.path ?? '';
-    switch (path
-        .split('.')
-        .last) {
+    switch (path.split('.').last) {
       case 'zip':
         mediaPlayer.stop();
         playerTypeStream.sink.add(PlayerType.cdg);
