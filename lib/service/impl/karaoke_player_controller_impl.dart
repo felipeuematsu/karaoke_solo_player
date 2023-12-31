@@ -16,6 +16,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class KaraokePlayerControllerImpl extends KaraokePlayerController {
   KaraokePlayerControllerImpl(this._queueService) {
     mediaPlayer.stream.position.listen((position) async {
+      print('position: $position');
       final data = jsonEncode({
         'position': currentSongId == 0 ? 0 : position.inSeconds,
         'songId': currentSongId,
@@ -24,6 +25,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       });
       webSocketChannel?.sink.add(data);
     });
+    mediaPlayer.stream.volume.listen((volume) async => webSocketChannel?.sink.add(jsonEncode({'volume': volume.round()})));
     mediaPlayer.stream.completed.listen((isCompleted) async {
       if (isCompleted && isSearching == false) {
         currentSinger = null;
@@ -52,7 +54,8 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
     Timer.periodic(const Duration(seconds: 2), (_) async {
       if (webSocketChannel == null) {
         try {
-          final webSocket = webSocketChannel = WebSocketChannel.connect(Uri.parse('ws://$apiUrl:$apiPort'));
+          final webSocket = webSocketChannel = WebSocketChannel.connect(Uri.parse('ws://$apiUrl'));
+          webSocket.sink.add(jsonEncode({'volume': mediaPlayer.state.volume.round()}));
           decodeWebSocketJson(String data) async {
             try {
               final decoded = json.decode(data);
@@ -76,6 +79,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
                 'skip' => skip(),
                 'volumeDown' => volumeDown(),
                 'volumeUp' => volumeUp(),
+                'volume' => webSocket.sink.add(jsonEncode({'volume': mediaPlayer.state.volume.round()})),
                 _ => decodeWebSocketJson(data)
               };
             }
@@ -90,7 +94,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  final Player mediaPlayer = Player();
+  final Player mediaPlayer = Player()..setVolume(70);
   final _cdgPlayer = CDGPlayer();
   final _zipDecoder = ZipDecoder();
   final QueueService _queueService;
@@ -235,30 +239,24 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  void volumeDown() {
-    switch (currentPlayerType) {
-      case PlayerType.cdg:
-      case PlayerType.vlc:
-      case PlayerType.none:
-        mediaPlayer.setVolume(max(mediaPlayer.state.volume - 5, 0.0));
-        return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume).round()}'});
-    }
+  Future<void> volumeDown() async {
+    var newVolume = max(mediaPlayer.state.volume - 5, 0.0);
+    await mediaPlayer.setVolume(newVolume);
+    return notificationStream.sink.add({'message': 'Volume: ${(newVolume).round()}'});
   }
 
   @override
-  void volumeUp() {
-    switch (currentPlayerType) {
-      case PlayerType.cdg:
-      case PlayerType.vlc:
-      case PlayerType.none:
-        mediaPlayer.setVolume(min(mediaPlayer.state.volume + 5, 100));
-        return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume).round()}'});
-    }
+  Future<void> volumeUp() async {
+    var newVolume = min(mediaPlayer.state.volume + 5, 100.0);
+    await mediaPlayer.setVolume(newVolume);
+    return notificationStream.sink.add({'message': 'Volume: ${(newVolume).round()}'});
   }
 
   @override
-  void setVolume(int volume) {
-    mediaPlayer.setVolume(max(min(volume, 100.0), 0).toDouble());
-    return notificationStream.sink.add({'message': 'Volume: ${(mediaPlayer.state.volume).round()}'});
+  Future<void> setVolume(int volume) async {
+
+    var newVolume = max(min(volume, 100.0), 0.0).toDouble();
+    await mediaPlayer.setVolume(newVolume);
+    return notificationStream.sink.add({'message': 'Volume: ${(newVolume).round()}'});
   }
 }
