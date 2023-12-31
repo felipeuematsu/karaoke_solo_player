@@ -17,7 +17,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   KaraokePlayerControllerImpl(this._queueService) {
     mediaPlayer.stream.position.listen((position) async {
       final data = jsonEncode({
-        'position': currentSongId == 0 ? 0 : position.inSeconds,
+        'position': currentSongId == null ? 0 : position.inSeconds,
         'songId': currentSongId,
         'singer': currentSinger,
         'playing': isPlaying,
@@ -28,7 +28,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
     mediaPlayer.stream.completed.listen((isCompleted) async {
       if (isCompleted && isSearching == false) {
         currentSinger = null;
-        currentSongId = 0;
+        currentSongId = null;
 
         isSearching = true;
         await skip();
@@ -103,7 +103,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   WebSocketChannel? webSocketChannel;
 
   String? currentSinger;
-  int currentSongId = 0;
+  int? currentSongId;
   bool isSearching = false;
 
   Future<void> _loadZip(String zipPath) async {
