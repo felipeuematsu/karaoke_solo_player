@@ -16,7 +16,6 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class KaraokePlayerControllerImpl extends KaraokePlayerController {
   KaraokePlayerControllerImpl(this._queueService) {
     mediaPlayer.stream.position.listen((position) async {
-      print('position: $position');
       final data = jsonEncode({
         'position': currentSongId == 0 ? 0 : position.inSeconds,
         'songId': currentSongId,
@@ -26,7 +25,6 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       webSocketChannel?.sink.add(jsonEncode({'volume': mediaPlayer.state.volume.round()}));
       webSocketChannel?.sink.add(data);
     });
-    mediaPlayer.stream.volume.listen((volume) => webSocketChannel?.sink.add(jsonEncode({'volume': volume.round()})));
     mediaPlayer.stream.completed.listen((isCompleted) async {
       if (isCompleted && isSearching == false) {
         currentSinger = null;
