@@ -192,6 +192,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       if (value != null) {
         currentSinger = value.singer.name;
         currentSongId = value.song.songId ?? 0;
+        _cdgPlayer.currentMillis = 0;
         await loadSong(value.song);
         play();
         notificationStream.sink.add({
