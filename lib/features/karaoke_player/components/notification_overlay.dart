@@ -37,26 +37,28 @@ class _NotificationOverlayState extends State<NotificationOverlay> with SingleTi
 
   @override
   Widget build(BuildContext context) {
+    final scale = MediaQuery.of(context).size.height / 1080;
     return StreamBuilder<Map<String, String>>(
       stream: widget.notificationStream.stream,
       builder: (context, snapshot) => FadeTransition(
         opacity: controller,
-        child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
-          if (snapshot.data?['image'] != null) ...[
-            Image.network(
-              snapshot.data?['image'] ?? '',
-              height: 64,
-              width: 64,
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width / 2,
+          child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
+            if (snapshot.data?['image'] != null) ...[
+              Image.network(snapshot.data?['image'] ?? '', height: 64 * scale, width: 64 * scale),
+              Gap(8 * scale),
+            ],
+            Expanded(
+              child: Text(
+                snapshot.data?['message'] ?? '',
+                textScaler: TextScaler.linear(widget.scale),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 48 * scale, color: Colors.white, shadows: [Shadow(blurRadius: 16 * scale)]),
+              ),
             ),
-            const Gap(8),
-          ],
-          Text(
-            snapshot.data?['message'] ?? '',
-            textScaler: TextScaler.linear(widget.scale),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 48, color: Colors.white, shadows: [Shadow(blurRadius: 16)]),
-          ),
-        ]),
+          ]),
+        ),
       ),
     );
   }
