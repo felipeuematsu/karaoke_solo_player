@@ -136,13 +136,13 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  void play() async {
+  Future<void> play() async {
     switch (currentPlayerType) {
       case PlayerType.vlc:
-        mediaPlayer.play();
+        await mediaPlayer.play();
         return playerTypeStream.sink.add(PlayerType.vlc);
       case PlayerType.cdg:
-        mediaPlayer.play();
+        await mediaPlayer.play();
         return playerTypeStream.sink.add(PlayerType.cdg);
       case PlayerType.none:
         break;
@@ -179,7 +179,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
   }
 
   @override
-  void restart() {
+  Future<void> restart() async {
     switch (currentPlayerType) {
       case PlayerType.cdg:
       case PlayerType.vlc:
@@ -197,9 +197,10 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
       if (value != null) {
         currentSinger = value.singer.name;
         currentSongId = value.song.songId ?? 0;
-        _cdgPlayer.currentMillis = 0;
         await loadSong(value.song);
-        play();
+        _cdgPlayer.currentMillis = 0;
+        mediaPlayer.seek(const Duration(milliseconds: 0));
+        await play();
         notificationStream.sink.add({
           'message': 'Now playing: ${value.song.artist} - ${value.song.title}\n by ${value.singer.name}',
         });
