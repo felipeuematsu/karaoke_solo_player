@@ -117,7 +117,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
         _cdgPlayer.load(content.buffer);
       }
       if (file.name.contains('.mp3')) {
-        mediaPlayer.open(await Media.memory(content));
+        mediaPlayer.open(await Media.memory(content), play: false);
       }
     }
   }
@@ -128,7 +128,7 @@ class KaraokePlayerControllerImpl extends KaraokePlayerController {
     final mp3 = File(mp3Path);
     final cdg = File(cdgPath);
     cdg.exists().then((value) => cdg.readAsBytes().then((value) => _cdgPlayer.load(value.buffer)));
-    mp3.exists().then((value) => mediaPlayer.open(Media(mp3Path)));
+    mp3.exists().then((value) => mediaPlayer.open(Media(mp3Path), play: false));
   }
 
   Future<void> _loadVideo(String path) async {
